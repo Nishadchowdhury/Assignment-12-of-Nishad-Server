@@ -9,7 +9,9 @@ app.use(express.json());
 
 
 
-
+app.get('/ok', async (req, res) => {
+    res.send('server is running Laparts in port  ok bro ')
+})
 
 
 

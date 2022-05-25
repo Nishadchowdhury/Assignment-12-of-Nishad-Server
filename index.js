@@ -19,6 +19,8 @@ async function runServer() {
 
         await client.connect();
         const AllProductsCollection = client.db("OurProducts").collection("AllProducts");
+        const ordersCollection = client.db("ordersData").collection("orders");
+        const usersCollection = client.db("usersData").collection("users");
 
 
         //get all products what we Manufacturer
@@ -47,6 +49,41 @@ async function runServer() {
             const data = await AllProductsCollection.findOne(query);
             res.send(data)
         })
+
+        //place a Order
+        app.post('/addOrder', async (req, res) => {
+            const orderData = req.body;
+            const result = await ordersCollection.insertOne(orderData);
+            res.send(result);
+            console.log(orderData);
+        })
+
+        //Create an user
+        app.put('/Login', async (req, res) => {
+            const email = req.body.email;
+            const user = req.body;
+            const filter = { UserEmail: email }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+
+            // const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10d' });
+
+            res.send({ result, token: 1 });
+
+        })
+
+        //get products by user email
+        app.get('/ordersByUser/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { BuyerEmail: email }
+            const result = await ordersCollection.find(query).toArray();
+            res.send(result)
+        })
+
 
 
 

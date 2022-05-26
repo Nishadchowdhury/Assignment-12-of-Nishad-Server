@@ -28,13 +28,7 @@ function verifyJWT(req, res, next) {
     }
     const token = authHeader.split(' ')[1];
 
-    // return console.log(token);
-
-    console.log(token);
-
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-
-        console.log(process.env.ACCESS_TOKEN_SECRET);
 
         if (err) {
             return res.status(403).send({ message: 'Forbidden Access' })
@@ -43,7 +37,6 @@ function verifyJWT(req, res, next) {
         next();
 
     });
-
 
 }
 
@@ -57,6 +50,7 @@ async function runServer() {
         const AllProductsCollection = client.db("OurProducts").collection("AllProducts");
         const ordersCollection = client.db("ordersData").collection("orders");
         const usersCollection = client.db("usersData").collection("users");
+        const reviewsCollection = client.db("usersData").collection("reviews");
 
 
         //get all products what we Manufacturer
@@ -65,6 +59,22 @@ async function runServer() {
             const data = await AllProductsCollection.find({}).toArray();
 
             res.send(data)
+        })
+
+        //post a product
+        app.post('/allProducts', verifyJWT, async (req, res) => {
+            const product = req.body;
+
+            const result = await AllProductsCollection.insertOne(product);
+            res.send(result)
+        })
+
+        //post a product
+        app.delete('/allProducts/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await AllProductsCollection.deleteOne(query);
+            res.send(result)
         })
 
 
@@ -122,11 +132,25 @@ async function runServer() {
 
         })
 
+        //get all user
+        app.get('/userAll', verifyJWT, async (req, res) => {
+            const userDb = await usersCollection.find({}).toArray();
+            res.send(userDb);
+        })
+
         //get products by user email
         app.get('/ordersByUser/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const query = { BuyerEmail: email }
             const result = await ordersCollection.find(query).toArray();
+            res.send(result)
+        })
+
+
+        //get products by user email
+        app.get('/ordersByUser', verifyJWT, async (req, res) => {
+
+            const result = await ordersCollection.find({}).toArray();
             res.send(result)
         })
 
@@ -170,7 +194,40 @@ async function runServer() {
 
             const result = await AllProductsCollection.updateOne(filter, updateDoc, option);
             res.send(result)
+        });
+
+        app.post('/addReview', verifyJWT, async (req, res) => {
+            const review = req.body;
+
+            const result = await reviewsCollection.insertOne(review);
+
+            res.send(result)
+
         })
+
+
+        // users reviews
+        app.get('/getReview/:email', async (req, res) => {
+            const userEmail = req.params.email;
+
+            const query = { userEmail: userEmail }
+
+            const result = await reviewsCollection.find(query).toArray();
+
+            res.send(result)
+
+        })
+
+        // get random 3 reviews for home page
+        app.get('/getReviewLimit/:limit', async (req, res) => {
+            const limit = req.params.limit;
+            const result = await reviewsCollection.find({}).limit(+limit).toArray();
+            res.send(result)
+
+
+        })
+
+
 
 
         //payment api for card .

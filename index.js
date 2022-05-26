@@ -42,6 +42,9 @@ function verifyJWT(req, res, next) {
 
 
 
+
+
+
 async function runServer() {
 
     try {
@@ -51,6 +54,20 @@ async function runServer() {
         const ordersCollection = client.db("ordersData").collection("orders");
         const usersCollection = client.db("usersData").collection("users");
         const reviewsCollection = client.db("usersData").collection("reviews");
+
+
+        // verifyAdmin
+
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            console.log(requester);
+            const requesterAccount = await usersCollection.findOne({ UserEmail: requester });
+            if (requesterAccount?.role === 'Admin') {
+                next();
+            } else {
+                return res.status(403).send({ message: 'Forbidden access' });
+            }
+        }
 
 
         //get all products what we Manufacturer
@@ -193,6 +210,21 @@ async function runServer() {
             console.log('update', updateDoc);
 
             const result = await AllProductsCollection.updateOne(filter, updateDoc, option);
+            res.send(result)
+        });
+
+        app.put('/updateShipped/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const Shipped = req.body;
+            const filter = { _id: ObjectId(id) };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: Shipped
+            }
+            console.log(id);
+            console.log('update', updateDoc);
+
+            const result = await ordersCollection.updateOne(filter, updateDoc, option);
             res.send(result)
         });
 

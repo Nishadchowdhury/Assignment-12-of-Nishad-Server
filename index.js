@@ -106,6 +106,7 @@ async function runServer() {
       const total = req.query.total;
 
       const data = await AllProductsCollection.find({})
+        .sort({ _id: -1 })
         .limit(+total)
         .toArray();
 
@@ -278,6 +279,7 @@ async function runServer() {
       const limit = req.params.limit;
       const result = await reviewsCollection
         .find({})
+        .sort({ _id: -1 })
         .limit(+limit)
         .toArray();
       res.send(result);
